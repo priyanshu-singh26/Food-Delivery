@@ -4,20 +4,20 @@ const cartSchema = new mongoose.Schema({
     userId : [{
         type: mongoose.Schema.Types.ObjectId,
         // required: true,
-        ref:"userSchema"
+        ref:"User"
     }],
-    items: {
+    items: [{
         type: mongoose.Schema.Types.ObjectId,      // ref food
         // required: true
-        ref:"foodSchema"
-    },
+        ref:"food"
+    }],
     amount : {
         type: String,
         required: true
     },
     quentity : {
-        type : Boolean,
-        default : false
+        type : Number,
+        default : 1
     }
 })
 

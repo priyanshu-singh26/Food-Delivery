@@ -3,69 +3,106 @@ import { cartModel } from "../models/cartModel.js";
 
 
 // add items to user cart
+// export const addToCart = async (req, res) => {
+
+//     const { userId, itemId, amount, quentity } = req.body
+
+//     // try {
+//     //     // Fetch the user data
+//     //     let userData = await userModel.findById(req.body.userId);
+//     //     console.log(userData)
+//     //     if (!userData) {
+//     //         return res.status(404).json({
+//     //             status: false,
+//     //             message: "User not found",
+//     //         });
+//     //     }
+
+//     //     // Initialize cartData if it doesn't exist
+//     //     let cartData = userData.cardData  ; 
+//     //     console.log(cartData)
+
+//     //     // Check if the item already exists in the cart
+//     //     if (!cartData[req.body.itemId]) {
+//     //         cartData[req.body.itemId] = 1;
+//     //     } 
+//     //     else {
+//     //         // Otherwise, increase the quantity of the item in the cart
+//     //         cartData[req.body.itemId] += 1;
+//     //     }
+
+//     //    // Update the user's cart in the database using findByIdAndUpdate
+//     //    await userModel.findByIdAndUpdate(
+//     //        req.body.userId,
+//     //       { cardData: cartData }, // Update only the cart field
+//     //     //   { new: true } 
+//     //     );
+//     //     console.log(cartData)
+
+//     //     res.status(200).json({
+//     //         status: true,
+//     //         message: "Added to Cart",
+//     //     });
+
+//     // } 
+
+
+//     // new cart..
+//     try{
+//         const newCart = new cartModel({
+//             userId,
+//             itemId,
+//             amount,
+//             quentity
+//          });
+    
+//         const cartData = await newCart.save();
+//         // push in user model.caeddata
+//         userModel.cardData._id.push(cartData);
+
+//     }
+
+
+
+//     catch (error) {
+//         console.error(error); // Log the error for debugging
+//         res.status(400).json({
+//             status: false,
+//             message: "Error while adding item to cart",
+//         });
+//     }
+// };
+
+
 export const addToCart = async (req, res) => {
+    const { userId, itemId, amount, quantity } = req.body;
 
-    const { userId, itemId, amount, quentity } = req.body
-
-    // try {
-    //     // Fetch the user data
-    //     let userData = await userModel.findById(req.body.userId);
-    //     console.log(userData)
-    //     if (!userData) {
-    //         return res.status(404).json({
-    //             status: false,
-    //             message: "User not found",
-    //         });
-    //     }
-
-    //     // Initialize cartData if it doesn't exist
-    //     let cartData = userData.cardData  ; 
-    //     console.log(cartData)
-
-    //     // Check if the item already exists in the cart
-    //     if (!cartData[req.body.itemId]) {
-    //         cartData[req.body.itemId] = 1;
-    //     } 
-    //     else {
-    //         // Otherwise, increase the quantity of the item in the cart
-    //         cartData[req.body.itemId] += 1;
-    //     }
-
-    //    // Update the user's cart in the database using findByIdAndUpdate
-    //    await userModel.findByIdAndUpdate(
-    //        req.body.userId,
-    //       { cardData: cartData }, // Update only the cart field
-    //     //   { new: true } 
-    //     );
-    //     console.log(cartData)
-
-    //     res.status(200).json({
-    //         status: true,
-    //         message: "Added to Cart",
-    //     });
-
-    // } 
-
-
-    // new cart..
-    try{
+    try {
+        // Create new cart entry
         const newCart = new cartModel({
             userId,
-            itemId,
+            items: [itemId],
             amount,
-            quentity
-         });
-    
+            quantity
+        });
+
         const cartData = await newCart.save();
-        // push in user model.caeddata
-        userModel.cardData._id.push(cartData);
 
-    }
+        // Update the user's cartData array
+        await userModel.findByIdAndUpdate(
+            userId,
+            { $push: { cardData: cartData._id } },
+            { new: true }
+        );
 
+        res.status(201).json({
+            status: true,
+            message: "Item added to cart successfully",
+            cart: cartData
+        });
 
-
-    catch (error) {
-        console.error(error); // Log the error for debugging
+    } catch (error) {
+        console.error(error);
         res.status(400).json({
             status: false,
             message: "Error while adding item to cart",
@@ -236,47 +273,76 @@ export const removeToCart = async (req, res) => {
 
 
 
+// export const getCart = async (req, res) => {
+//     try {
+//         // Ensure that the userId exists in the request body
+//         // if (!req.body.userId) {
+//         //     return res.status(400).json({
+//         //         status: false,
+//         //         message: "User ID is required",
+//         //     });
+//         // }
+
+//         // Find the user by userId
+//         let userData = await userModel.findById(req.body.userId);
+//         if (!userData) {
+//             return res.status(404).json({
+//                 status: false,
+//                 message: "User not found",
+//             });
+//         }
+
+//         // Check if cartData exists
+//         let cartData = await userData.cardData;
+//         console.log(cartData)
+//         if (!cartData || cartData.length === 0) {
+//             return res.status(404).json({
+//                 status: false,
+//                 message: "No items found in the cart",
+//             });
+//         }
+
+//         console.log(cartData);
+
+//         res.status(200).json({
+//             status: true,
+//             cartData, 
+//         });
+//     } 
+//     catch (error) {
+//         console.error(error); 
+//         res.status(500).json({
+//             status: false,
+//             message: "An error occurred while fetching cart data.",
+//         });
+//     }
+// };
+
+
+
+
 export const getCart = async (req, res) => {
+    // const { userId } = req.params;
+    let userId = await userModel.findById(req.body.userId);
+    console.log(userId);
+
     try {
-        // Ensure that the userId exists in the request body
-        // if (!req.body.userId) {
-        //     return res.status(400).json({
-        //         status: false,
-        //         message: "User ID is required",
-        //     });
-        // }
-
-        // Find the user by userId
-        let userData = await userModel.findById(req.body.userId);
-        if (!userData) {
-            return res.status(404).json({
-                status: false,
-                message: "User not found",
-            });
-        }
-
-        // Check if cartData exists
-        let cartData = await userData.cardData;
-        console.log(cartData)
-        if (!cartData || cartData.length === 0) {
-            return res.status(404).json({
-                status: false,
-                message: "No items found in the cart",
-            });
-        }
-
-        console.log(cartData);
+        const cartItems = await cartModel.find({ userId })
+        
+            .populate('items') // get food item details
+            .populate('userId', 'name email'); // optional: get user info
 
         res.status(200).json({
             status: true,
-            cartData, 
+            cart: cartItems
         });
     } 
     catch (error) {
-        console.error(error); 
+        console.error("Error fetching cart data:", error);
         res.status(500).json({
             status: false,
-            message: "An error occurred while fetching cart data.",
+            message: "Error fetching cart data"
         });
     }
 };
+

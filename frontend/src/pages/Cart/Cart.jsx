@@ -1,4 +1,5 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
+// import axios from 'axios'
 import './Cart.css'
 import { StoreContext } from '../../context/StoreContext'
 import { useNavigate } from 'react-router-dom'
@@ -6,8 +7,24 @@ import { useNavigate } from 'react-router-dom'
 function Cart() {
 
   const {cartItems,food_list,removeCartItems,getTotalAmount,url} = useContext(StoreContext)
+  // const [cartList,setCartList] = useState([])
 
   const navigate = useNavigate();
+
+//   useEffect(() => {
+//     fetchCartData();
+//   }, []);
+
+//   const fetchCartData = async () => {
+//     try {
+//         let token = localStorage.getItem("token")
+//         const response = await axios.get(`http://localhost:4000/api/cart/get`,{headers:{token}});
+//         console.log(response)
+//         setCartList(response.data);
+//     } catch (error) {
+//         console.error("Error fetching todo list", error);
+//     }
+// };
 
   return (
     <div className='cart'>
@@ -26,7 +43,7 @@ function Cart() {
           if(cartItems[item._id]>0)
           {
             return(
-             <> 
+             <div key={item._id}> 
               <div className="cart-items-title cart-items-item">
                 <img src={url+"/images/"+item.image} alt="" />
                 <p>{item.name}</p>
@@ -36,7 +53,7 @@ function Cart() {
                 <p onClick={()=>removeCartItems(item._id)} className='cross'>x</p>
               </div>
               <hr />
-              </> 
+              </div> 
             )
           }
         })

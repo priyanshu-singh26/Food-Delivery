@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema({
     cardData:{
         type: mongoose.Schema.Types.ObjectId ,   // ref cart model
         // default:{}
-        ref:"cartSchema"
+        ref:"cart"
     },
 
 

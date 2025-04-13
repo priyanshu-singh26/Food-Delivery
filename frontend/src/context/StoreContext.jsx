@@ -14,19 +14,41 @@ const StoreContextprovider = (props) => {       // Create Provider
         // console.log(response);
     }    
 
-    const loadCartData = async (token) => {
-        const response = await axios.get(url+"/api/cart/get",{},{headers:{token}})   
-        console.log(response)
-        setCartItems(response.data.cardData)
-    }
+    // fetchCartData
+    const fetchCartData = async () => {
+        try {
+            let token = localStorage.getItem("token")
+          const res = await axios.get(`${url}/api/cart/get`,{headers:{token}});
+          const cart = res.data.cart;
+          console.log(cart)
+    
+          const cartData = {};
+          const foodData = {};
+    
+          cart.forEach(entry => {
+            const quantity = entry.quantity || 1;
+            entry.items.forEach(item => {
+              cartData[item._id] = quantity;
+              foodData[item._id] = item;
+            });
+          });
+    
+          setCartItems(cartData);
+        //   setfood_list(Object.values(foodData));
+        } 
+        catch (err) {
+          console.error("Fetch cart error:", err);
+        }
+    };
+    
 
     useEffect(()=>{
         async function loadData () {  
             await fetchFoodList();
             if(localStorage.getItem("token")){
                 setToken(localStorage.getItem("token"))
-                await loadCartData(localStorage.getItem("token"))
-                // await localCartData();
+                // await fetchCartData(localStorage.getItem("token"))
+                await fetchCartData();
             }
         }
         loadData();
@@ -47,15 +69,15 @@ const StoreContextprovider = (props) => {       // Create Provider
         }
 
         // let cartItems = [];
-        food_list.map((item)=>{
-            if(cartItems[item._id]>0){
-                let itemInfo = item;
-               // console.log(itemInfo)
-                itemInfo["quantity"] = cartItems[item._id]
-                orderItems.push(itemInfo)
-            }
-     
-        })
+        // food_list.map((item)=>{
+        //     if(cartItems[item._id]>0){
+        //         let itemInfo = item;
+        //        // console.log(itemInfo)
+        //         itemInfo["quantity"] = cartItems[item._id]
+        //         orderItems.push(itemInfo)
+        //     }
+        // })
+
         let cartData = {
             itemId:itemId,
             // items: cartItems,
