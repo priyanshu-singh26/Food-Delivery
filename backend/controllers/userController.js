@@ -6,7 +6,7 @@ import validator from 'validator'
 
 // For SINGUP//
 export const signup = async (req,res) =>{
-    // console.log('body-->', req.body)
+    console.log('body-->', req.body)
     const { email,password,name } = req.body;
 
     try{

@@ -78,7 +78,24 @@ export const addToCart = async (req, res) => {
     const { userId, itemId, amount, quantity } = req.body;
 
     try {
-        // Create new cart entry
+        // Check if the item is already in the cart
+        const existingCartItem = await cartModel.findOne({ userId, items: itemId });
+
+        if (existingCartItem) {
+            // Item already in cart, update quantity and amount
+            existingCartItem.quantity += quantity;
+            existingCartItem.amount += amount;
+
+            const updatedCart = await existingCartItem.save();
+
+            return res.status(200).json({
+                status: true,
+                message: "Item quantity updated in cart",
+                cart: updatedCart
+            });
+        }
+
+        // Item not in cart, create new cart entry
         const newCart = new cartModel({
             userId,
             items: [itemId],
@@ -88,7 +105,7 @@ export const addToCart = async (req, res) => {
 
         const cartData = await newCart.save();
 
-        // Update the user's cartData array
+        // Add reference to user's cardData
         await userModel.findByIdAndUpdate(
             userId,
             { $push: { cardData: cartData._id } },
@@ -109,6 +126,7 @@ export const addToCart = async (req, res) => {
         });
     }
 };
+
 
 
 
@@ -214,60 +232,120 @@ export const addToCart = async (req, res) => {
 
 
 
+// export const removeToCart = async (req, res) => {
+//     try {
+//         // Fetch the user data by userId
+//         let userData = await userModel.findById(req.body.userId);
+//         if (!userData) {
+//             return res.status(404).json({
+//                 status: false,
+//                 message: "User not found",
+//             });
+//         }
+
+//         // Fetch the cartData of the user
+//         let cartData = userData.cardData;
+//         console.log(cartData);
+//         if (!cartData || !cartData[req.body.itemId]) {
+//             return res.status(400).json({
+//                 status: false,
+//                 message: "Item not found in cart or invalid itemId",
+//             });  // user not define
+//         }
+
+
+//         // If the item exists and its count is greater than 0, decrement the count
+//         if (cartData[req.body.itemId] >= 0) {
+//             cartData[req.body.itemId] -= 1;
+
+//             // If the item count is now 0, you can remove it from the cart (optional)
+//             // if (cartData[req.body.itemId] === 0) {
+//             //     cartData[req.body.itemId] -=1;
+//             // }
+
+//             // Update the cart in the database
+//             await userModel.findByIdAndUpdate(req.body.userId, { cardData:cartData });
+
+//             return res.status(200).json({
+//                 status: true,
+//                 message: "Item removed from cart",
+//             });
+//         } 
+//         else {
+//             return res.status(400).json({
+//                 status: false,
+//                 message: "Item quantity is already 0",
+//             });
+//         }
+//     } 
+//     catch (error) {
+//         console.error(error); 
+//         res.status(500).json({
+//             status: false,
+//             message: "Server Error: " + error.message,
+//         });
+//     }
+// };
+
+
+
 export const removeToCart = async (req, res) => {
+    const { userId, cartId } = req.body;
+
     try {
-        // Fetch the user data by userId
-        let userData = await userModel.findById(req.body.userId);
-        if (!userData) {
+        // Find the user
+        const user = await userModel.findById(userId);
+        if (!user) {
             return res.status(404).json({
                 status: false,
                 message: "User not found",
             });
         }
 
-        // Fetch the cartData of the user
-        let cartData = userData.cardData;
-        console.log(cartData);
-        if (!cartData || !cartData[req.body.itemId]) {
+        // Check if the cartId exists in user's cartData
+        if (!user.cardData.includes(cartId)) {
             return res.status(400).json({
                 status: false,
-                message: "Item not found in cart or invalid itemId",
-            });  // user not define
+                message: "Item not found in user's cart",
+            });
         }
 
-
-        // If the item exists and its count is greater than 0, decrement the count
-        if (cartData[req.body.itemId] >= 0) {
-            cartData[req.body.itemId] -= 1;
-
-            // If the item count is now 0, you can remove it from the cart (optional)
-            // if (cartData[req.body.itemId] === 0) {
-            //     cartData[req.body.itemId] -=1;
-            // }
-
-            // Update the cart in the database
-            await userModel.findByIdAndUpdate(req.body.userId, { cardData:cartData });
-
-            return res.status(200).json({
-                status: true,
-                message: "Item removed from cart",
-            });
-        } 
-        else {
-            return res.status(400).json({
+        // Fetch the cart document
+        const cartItem = await cartModel.findById(cartId);
+        if (!cartItem) {
+            return res.status(404).json({
                 status: false,
-                message: "Item quantity is already 0",
+                message: "Cart item not found",
             });
         }
-    } 
-    catch (error) {
-        console.error(error); 
+
+        // Decrease quantity or remove completely
+        if (cartItem.quantity > 1) {
+            cartItem.quantity -= 1;
+            await cartItem.save();
+        } else {
+            // Remove cart entry from DB
+            await cartModel.findByIdAndDelete(cartId);
+
+            // Remove reference from user's cartData
+            user.cardData = user.cardData.filter(id => id.toString() !== cartId);
+            await user.save();
+        }
+
+        res.status(200).json({
+            status: true,
+            message: "Item removed from cart",
+        });
+
+    } catch (error) {
+        console.error(error);
         res.status(500).json({
             status: false,
             message: "Server Error: " + error.message,
         });
     }
 };
+
 
 
 
